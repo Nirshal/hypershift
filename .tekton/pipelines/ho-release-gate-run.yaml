@@ -7,6 +7,9 @@ spec:
     pipeline: "6h0m0s"
     tasks: "5h30m0s"
     finally: "30m0s"
+  taskRunSpecs:
+    - pipelineTaskName: create-release
+      serviceAccountName: nightly-promotion-sa
   pipelineRef:
     resolver: git
     params:
