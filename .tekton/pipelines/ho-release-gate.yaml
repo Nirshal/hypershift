@@ -406,14 +406,48 @@ spec:
           EOFPAYLOAD
           )
 
-          HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
-            -H 'Content-type: application/json' \
-            --data "${PAYLOAD}" \
-            "${SLACK_WEBHOOK_URL}")
+          SLACK_RETRIES=3
+          SLACK_RETRY_DELAY=10
+          SLACK_SENT=false
 
-          echo "Slack response: HTTP ${HTTP_CODE}"
-          if [[ "${HTTP_CODE}" != "200" ]]; then
-            echo "WARN: Slack notification failed"
+          for attempt in $(seq 1 ${SLACK_RETRIES}); do
+            set +e
+            CURL_OUTPUT=$(curl -sS -w '\n%{http_code}' -X POST \
+              -H 'Content-type: application/json' \
+              --data "${PAYLOAD}" \
+              "${SLACK_WEBHOOK_URL}" 2>&1)
+            CURL_RC=$?
+            set -e
+
+            HTTP_CODE=$(echo "${CURL_OUTPUT}" | tail -1)
+            CURL_BODY=$(echo "${CURL_OUTPUT}" | sed '$d')
+
+            if [[ ${CURL_RC} -ne 0 ]]; then
+              echo "ERROR: curl failed (exit code ${CURL_RC}, attempt ${attempt}/${SLACK_RETRIES})"
+              echo "  curl output: ${CURL_BODY}"
+              if [[ ${attempt} -lt ${SLACK_RETRIES} ]]; then
+                echo "  retrying in ${SLACK_RETRY_DELAY}s..."
+                sleep ${SLACK_RETRY_DELAY}
+              fi
+              continue
+            fi
+
+            if [[ "${HTTP_CODE}" == "200" ]]; then
+              echo "Slack notification sent (attempt ${attempt})"
+              SLACK_SENT=true
+              break
+            else
+              echo "WARN: Slack returned HTTP ${HTTP_CODE} (attempt ${attempt}/${SLACK_RETRIES})"
+              echo "  response: ${CURL_BODY}"
+              if [[ ${attempt} -lt ${SLACK_RETRIES} ]]; then
+                echo "  retrying in ${SLACK_RETRY_DELAY}s..."
+                sleep ${SLACK_RETRY_DELAY}
+              fi
+            fi
+          done
+
+          if [[ "${SLACK_SENT}" != "true" ]]; then
+            echo "ERROR: Slack notification failed after ${SLACK_RETRIES} attempts"
           fi
           echo "=== notify-slack: done ==="
     params:
@@ -473,13 +507,47 @@ spec:
           EOFPAYLOAD
           )
 
-          HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
-            -H 'Content-type: application/json' \
-            --data "${PAYLOAD}" \
-            "${SLACK_WEBHOOK_URL}")
+          SLACK_RETRIES=3
+          SLACK_RETRY_DELAY=10
+          SLACK_SENT=false
 
-          echo "Slack response: HTTP ${HTTP_CODE}"
-          if [[ "${HTTP_CODE}" != "200" ]]; then
-            echo "WARN: Slack error notification failed"
+          for attempt in $(seq 1 ${SLACK_RETRIES}); do
+            set +e
+            CURL_OUTPUT=$(curl -sS -w '\n%{http_code}' -X POST \
+              -H 'Content-type: application/json' \
+              --data "${PAYLOAD}" \
+              "${SLACK_WEBHOOK_URL}" 2>&1)
+            CURL_RC=$?
+            set -e
+
+            HTTP_CODE=$(echo "${CURL_OUTPUT}" | tail -1)
+            CURL_BODY=$(echo "${CURL_OUTPUT}" | sed '$d')
+
+            if [[ ${CURL_RC} -ne 0 ]]; then
+              echo "ERROR: curl failed (exit code ${CURL_RC}, attempt ${attempt}/${SLACK_RETRIES})"
+              echo "  curl output: ${CURL_BODY}"
+              if [[ ${attempt} -lt ${SLACK_RETRIES} ]]; then
+                echo "  retrying in ${SLACK_RETRY_DELAY}s..."
+                sleep ${SLACK_RETRY_DELAY}
+              fi
+              continue
+            fi
+
+            if [[ "${HTTP_CODE}" == "200" ]]; then
+              echo "Slack error notification sent (attempt ${attempt})"
+              SLACK_SENT=true
+              break
+            else
+              echo "WARN: Slack returned HTTP ${HTTP_CODE} (attempt ${attempt}/${SLACK_RETRIES})"
+              echo "  response: ${CURL_BODY}"
+              if [[ ${attempt} -lt ${SLACK_RETRIES} ]]; then
+                echo "  retrying in ${SLACK_RETRY_DELAY}s..."
+                sleep ${SLACK_RETRY_DELAY}
+              fi
+            fi
+          done
+
+          if [[ "${SLACK_SENT}" != "true" ]]; then
+            echo "ERROR: Slack error notification failed after ${SLACK_RETRIES} attempts"
           fi
           echo "=== notify-slack-error: done ==="
