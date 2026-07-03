@@ -611,7 +611,10 @@ spec:
             RELEASE_FIELD="N/A"
           fi
 
-          if [[ "${GATE_PASSED}" == "true" ]]; then
+          if [[ "${GATE_PASSED}" == "true" && ("${RELEASE_NAME}" == "N/A" || -z "${RELEASE_NAME}") ]]; then
+            COLOR="#F57C00"
+            HEADER=":warning: *HO Release Gate [${GATE_LABEL}] PASSED - Release creation failed*"
+          elif [[ "${GATE_PASSED}" == "true" ]]; then
             COLOR="#2E7D32"
             HEADER=":white_check_mark: *HO Release Gate [${GATE_LABEL}] PASSED*"
           else
