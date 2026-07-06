@@ -536,7 +536,7 @@ spec:
           metadata:
             generateName: ${RELEASE_PLAN}-
             labels:
-              release.appstudio.openshift.io/author: rh-ee-alesross
+              release.appstudio.openshift.io/author: nightly-promotion-sa
           spec:
             releasePlan: ${RELEASE_PLAN}
             snapshot: ${SNAPSHOT}
