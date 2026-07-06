@@ -10,6 +10,14 @@ spec:
   taskRunSpecs:
     - pipelineTaskName: create-release
       serviceAccountName: nightly-promotion-sa
+  workspaces:
+  - name: shared
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Mi
   pipelineRef:
     resolver: git
     params:
