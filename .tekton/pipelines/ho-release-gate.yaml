@@ -443,6 +443,12 @@ spec:
           BLOCKING_COUNT=$(echo "${RESULTS_JSON}" | jq '[.[] | select(.type == "blocking")] | length')
           INFORMING_COUNT=$(echo "${RESULTS_JSON}" | jq '[.[] | select(.type == "informing")] | length')
 
+          if [[ ${BLOCKING_COUNT} -eq 0 ]]; then
+            echo "ERROR: no blocking tests found in results - at least one blocking test is required"
+            echo -n "false" > $(results.gate-passed.path)
+            exit 1
+          fi
+
           echo "--- BLOCKING TESTS (${BLOCKING_COUNT}) ---"
           printf "%-50s %-10s %s\n" "JOB" "RESULT" "URL"
           printf "%-50s %-10s %s\n" "---" "------" "---"
