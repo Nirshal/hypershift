@@ -348,6 +348,11 @@ def evaluate_gate(results_json_str):
     blocking = [r for r in results if r["type"] == "blocking"]
     informing = [r for r in results if r["type"] == "informing"]
 
+    if not blocking:
+        print("ERROR: no blocking tests found in results"
+              " - at least one blocking test is required", flush=True)
+        return False
+
     print(f"--- BLOCKING TESTS ({len(blocking)}) ---", flush=True)
     print(f"{'JOB':<50} {'RESULT':<10} URL", flush=True)
     print(f"{'---':<50} {'------':<10} ---", flush=True)
